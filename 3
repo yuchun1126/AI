@@ -1,0 +1,100 @@
+	from tensorflow import keras
+	from keras.models import Sequential
+	from keras.layers import Dense, Flatten
+
+# ==========================================
+# 1. 載入 MNIST 手寫數字辨識資料集
+# ==========================================
+mnist = keras.datasets.mnist
+
+# 將資料集自動下載（或讀取快取）並切分為「訓練集」與「測試集」
+	# train_data / train_label : 用於訓練模型的 60,000 筆圖片與標籤
+# test_data / test_label   : 用於評估模型的 10,000 筆圖片與標籤
+(train_data, train_label), (test_data, test_label) = mnist.load_data()
+# ==========================================
+# 檢查 MNIST 資料集的型態與維度 (Shape & Type)
+# ==========================================
+
+# 檢查訓練圖片（train_data）的資料型態（在 NumPy 中通常為 numpy.ndarray）
+print(type(train_data))
+
+# 印出訓練圖片的形狀（預期輸出：(60000, 28, 28)，代表有 60,000 張 28x28 像素的灰階圖片）
+print(train_data.shape)
+
+# 檢查訓練標籤（train_label）的資料型態（通常為 numpy.ndarray）
+print(type(train_label))
+
+# 印出訓練標籤的形狀（預期輸出：(60000,)，代表 60,000 個對應的數字答案，例如 0~9）
+print(train_label.shape)
+
+# 印出測試圖片（test_data）的形狀（預期輸出：(10000, 28, 28)，代表 10,000 張 28x28 像素的測試圖片）
+print(test_data.shape)
+
+# 印出測試標籤（test_label）的形狀（預期輸出：(10000,)，代表 10,000 個對應的測試答案數字）
+print(test_label.shape)
+# ==========================================
+# 檢視 MNIST 訓練集的第一筆資料內容與標籤
+# ==========================================
+
+# 印出第一筆訓練資料的「標籤」（即這張圖片實際代表的數字答案，例如數字 5）
+print(train_label[0])
+
+# 印出第一筆訓練資料的「圖片像素陣列」
+# 這是一個 28x28 的二維陣列（矩陣），裡面的數值範圍是 0 到 255
+# 0 代表純黑色背景，數值越大代表該像素的顏色越白或越深（手寫筆畫的軌跡）
+print(train_data[0])
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 使用 Matplotlib 將第一筆 MNIST 圖片視覺化
+# ==========================================
+
+# plt.imshow(): 將二維陣列（像素矩陣）渲染成圖片
+# train_data[0]: 取得第一張 28x28 的手寫數字圖片像素資料
+# cmap='binary': 設定色彩對應表（Colormap）為二元黑白（binary），讓手寫筆畫與背景呈現清晰的對比
+plt.imshow(train_data[0], cmap='binary')
+
+# plt.show(): 將繪製好的圖片顯示在畫面上
+plt.show()
+# ==========================================
+# 1. 建立類神經網路模型架構 (Model Architecture)
+# ==========================================
+model = Sequential()  # 建立一個循序模型（層與層之間依序串接）
+
+# 加入 Flatten 層：將 28x28 的二維手寫數字圖片「攤平」成一維的 784 個像素值
+model.add(Flatten())
+
+# 加入隱藏層：擁有 32 個神經元，使用 ReLU 激活函數（input_dim=784 對應攤平後的 784 個特徵）
+model.add(Dense(32, activation='relu', input_dim=784))
+
+# 加入輸出層：擁有 10 個神經元（對應 0 到 9 十個數字類別），使用 Sigmoid 激活函數輸出各類別機率
+model.add(Dense(10, activation='sigmoid'))
+
+
+# ==========================================
+# 2. 編譯模型 (Model Compilation)
+# ==========================================
+# 設定優化器為 rmsprop
+# 損失函數使用 sparse_categorical_crossentropy（適用於多類別分類，且標籤為整數格式）
+# 評估指標（metrics）追蹤準確率（accuracy）
+model.compile(optimizer='rmsprop', 
+              loss='sparse_categorical_crossentropy', 
+              metrics=['accuracy'])
+
+
+# ==========================================
+# 3. 訓練模型 (Model Training)
+# ==========================================
+# 使用訓練集（train_data, train_label）進行模型訓練
+# epochs=20 代表完整訓練 20 個週期，batch_size=512 代表每次梯度更新前處理 512 筆資料
+model.fit(train_data, train_label, epochs=20, batch_size=512)
+
+
+# ==========================================
+# 4. 評估模型與輸出結果 (Model Evaluation)
+# ==========================================
+# 使用測試集（test_data, test_label）來檢驗模型的泛化能力與最終表現
+score = model.evaluate(test_data, test_label)
+
+# 印出模型在測試集上的最終準確率 (Accuracy)
+print("測試集最終準確率：", score[1])
